@@ -47,11 +47,11 @@ export default class DataManager {
     this.selectedCount = 0;
 
     this.data = data.map((row, index) => {
-      row.tableData = { ...row.tableData, id: index };
+      const localRow = { row, tableData: row.tableData }
       if (row.tableData.checked) {
         this.selectedCount++;
       }
-      return row;
+      return localRow;
     });
 
     this.filtered = false;
