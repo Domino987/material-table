@@ -7,6 +7,15 @@ type SvgIconComponent = typeof SvgIcon;
 
 export interface MaterialTableProps<RowData extends object> {
   actions?: (Action<RowData> | ((rowData: RowData) => Action<RowData>))[];
+  cellEditable?: {
+    cellStyle?: React.CSSProperties;
+    onCellEditApproved: (
+      newValue: any,
+      oldValue: any,
+      rowData: RowData,
+      columnDef: Column<RowData>
+    ) => Promise<void>;
+  };
   columns: Column<RowData>[];
   components?: Components;
   data: RowData[] | ((query: Query<RowData>) => Promise<QueryResult<RowData>>);
@@ -16,6 +25,9 @@ export interface MaterialTableProps<RowData extends object> {
   editable?: {
     isEditable?: (rowData: RowData) => boolean;
     isDeletable?: (rowData: RowData) => boolean;
+    onBulkUpdate?: (
+      changes: Record<number, { oldData: RowData; newData: RowData }>
+    ) => Promise<any>;
     onRowAdd?: (newData: RowData) => Promise<any>;
     onRowUpdate?: (newData: RowData, oldData?: RowData) => Promise<any>;
     onRowDelete?: (oldData: RowData) => Promise<any>;
@@ -118,10 +130,12 @@ export interface EditCellColumnDef {
   field: string;
   title: string;
   tableData: {
+    columnOrder: number;
     filterValue: any;
     groupOrder: any;
     groupSort: string;
     id: number;
+    width: string;
   };
 }
 
@@ -136,7 +150,7 @@ export interface Column<RowData extends object> {
     minimumFractionDigits?: number;
     maximumFractionDigits?: number;
   };
-  dateSetting?: { locale?: string };
+  dateSetting?: { locale?: string; format?: string };
   customFilterAndSearch?: (
     filter: any,
     rowData: RowData,
@@ -169,10 +183,10 @@ export interface Column<RowData extends object> {
   filterPlaceholder?: string;
   filterCellStyle?: React.CSSProperties;
   grouping?: boolean;
-  showGroupCount?: boolean;
   groupTitle?: string | ((groupData: any) => any) | React.ReactNode;
   headerStyle?: React.CSSProperties;
   hidden?: boolean;
+  hiddenByColumnsButton?: boolean;
   hideFilterIcon?: boolean;
   initialEditValue?: any;
   lookup?: object;
@@ -184,6 +198,7 @@ export interface Column<RowData extends object> {
     | "never"
     | ((columnDef: Column<RowData>, rowData: RowData) => boolean);
   removable?: boolean;
+  resizable?: boolean;
   validate?: (
     rowData: RowData
   ) => { isValid: boolean; helperText?: string } | string | boolean;
@@ -283,6 +298,7 @@ export interface Options<RowData extends object> {
   actionsColumnIndex?: number;
   addRowPosition?: "first" | "last";
   columnsButton?: boolean;
+  columnResizable?: boolean;
   defaultExpanded?: boolean | ((rowData: any) => boolean);
   debounceInterval?: number;
   detailPanelType?: "single" | "multiple";
@@ -290,7 +306,7 @@ export interface Options<RowData extends object> {
   draggable?: boolean;
   emptyRowsWhenPaging?: boolean;
   exportAllData?: boolean;
-  exportButton?: boolean;
+  exportButton?: boolean | { csv?: boolean; pdf?: boolean };
   exportDelimiter?: string;
   exportFileName?:
     | string
@@ -317,6 +333,7 @@ export interface Options<RowData extends object> {
   pageSize?: number;
   pageSizeOptions?: number[];
   paginationType?: "normal" | "stepped";
+  paginationPosition?: "bottom" | "top" | "both";
   rowStyle?:
     | React.CSSProperties
     | ((data: any, index: number, level: number) => React.CSSProperties);
@@ -348,6 +365,7 @@ export interface Localization {
     dateTimePickerLocalization?: object; // The date-fns locale object applied to the datepickers
     emptyDataSourceMessage?: React.ReactNode;
     filterRow?: {
+      filterPlaceHolder?: React.ReactNode;
       filterTooltip?: React.ReactNode;
     };
     editRow?: {
@@ -386,9 +404,12 @@ export interface Localization {
     showColumnsAriaLabel?: string;
     exportTitle?: React.ReactNode;
     exportAriaLabel?: string;
-    exportName?: React.ReactNode;
+    exportCSVName?: React.ReactNode;
+    exportPDFName?: React.ReactNode;
     searchTooltip?: React.ReactNode;
     searchPlaceholder?: React.ReactNode;
+    searchAriaLabel?: string;
+    clearSearchAriaLabel?: string;
   };
 }
 

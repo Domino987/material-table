@@ -1,188 +1,389 @@
-/* eslint-disable no-unused-vars */
-import TableCell from "@material-ui/core/TableCell";
-import TableRow from "@material-ui/core/TableRow";
-import IconButton from "@material-ui/core/IconButton";
 import PropTypes from "prop-types";
-import * as React from "react";
-/* eslint-enable no-unused-vars */
 
-export default class MTableGroupRow extends React.Component {
-  rotateIconStyle = (isOpen) => ({
-    transform: isOpen ? "rotate(90deg)" : "none",
-  });
+const RefComponent = PropTypes.shape({ current: PropTypes.element });
+const StyledComponent = PropTypes.shape({
+  classes: PropTypes.object,
+  innerRef: RefComponent,
+});
 
-  render() {
-    let colSpan = this.props.columns.filter((columnDef) => !columnDef.hidden)
-      .length;
-    this.props.options.selection && colSpan++;
-    this.props.detailPanel && colSpan++;
-    this.props.actions && this.props.actions.length > 0 && colSpan++;
-    const column = this.props.groups[this.props.level];
-
-    let detail;
-    if (this.props.groupData.isExpanded) {
-      if (this.props.groups.length > this.props.level + 1) {
-        // Is there another group
-        detail = this.props.groupData.groups.map((groupData, index) => (
-          <this.props.components.GroupRow
-            actions={this.props.actions}
-            key={groupData.value || "" + index}
-            columns={this.props.columns}
-            components={this.props.components}
-            detailPanel={this.props.detailPanel}
-            getFieldValue={this.props.getFieldValue}
-            groupData={groupData}
-            groups={this.props.groups}
-            icons={this.props.icons}
-            level={this.props.level + 1}
-            path={[...this.props.path, index]}
-            onGroupExpandChanged={this.props.onGroupExpandChanged}
-            onRowSelected={this.props.onRowSelected}
-            onRowClick={this.props.onRowClick}
-            onToggleDetailPanel={this.props.onToggleDetailPanel}
-            onTreeExpandChanged={this.props.onTreeExpandChanged}
-            onEditingCanceled={this.props.onEditingCanceled}
-            onEditingApproved={this.props.onEditingApproved}
-            options={this.props.options}
-            hasAnyEditingRow={this.props.hasAnyEditingRow}
-            isTreeData={this.props.isTreeData}
-          />
-        ));
-      } else {
-        detail = this.props.groupData.data.map((rowData, index) => {
-          if (rowData.tableData.editing) {
-            return (
-              <this.props.components.EditRow
-                columns={this.props.columns}
-                components={this.props.components}
-                data={rowData}
-                icons={this.props.icons}
-                path={[...this.props.path, index]}
-                localization={this.props.localization}
-                key={index}
-                mode={rowData.tableData.editing}
-                options={this.props.options}
-                isTreeData={this.props.isTreeData}
-                detailPanel={this.props.detailPanel}
-                onEditingCanceled={this.props.onEditingCanceled}
-                onEditingApproved={this.props.onEditingApproved}
-                getFieldValue={this.props.getFieldValue}
-              />
-            );
-          } else {
-            return (
-              <this.props.components.Row
-                actions={this.props.actions}
-                key={index}
-                columns={this.props.columns}
-                components={this.props.components}
-                data={rowData}
-                detailPanel={this.props.detailPanel}
-                getFieldValue={this.props.getFieldValue}
-                icons={this.props.icons}
-                path={[...this.props.path, index]}
-                onRowSelected={this.props.onRowSelected}
-                onRowClick={this.props.onRowClick}
-                onToggleDetailPanel={this.props.onToggleDetailPanel}
-                options={this.props.options}
-                isTreeData={this.props.isTreeData}
-                onTreeExpandChanged={this.props.onTreeExpandChanged}
-                onEditingCanceled={this.props.onEditingCanceled}
-                onEditingApproved={this.props.onEditingApproved}
-                hasAnyEditingRow={this.props.hasAnyEditingRow}
-              />
-            );
-          }
-        });
-      }
-    }
-
-    const freeCells = [];
-    for (let i = 0; i < this.props.level; i++) {
-      freeCells.push(<TableCell padding="checkbox" key={i} />);
-    }
-
-    let value = this.props.groupData.value;
-    if (column.lookup) {
-      value = column.lookup[value];
-    }
-
-    let title = column.title;
-    if (typeof this.props.options.groupTitle === "function") {
-      title = this.props.options.groupTitle(this.props.groupData);
-    } else if (typeof title !== "string") {
-      title = React.cloneElement(title);
-    }
-
-    const separator = this.props.options.groupRowSeparator || ": ";
-
-    const counter = this.props.groupData.data.length;
-
-    const conterText = this.props.options.showGroupCount ? `(${counter}) ` : "";
-
-    const groupText = `${conterText}${title}${separator}`;
-
-    return (
-      <>
-        <TableRow>
-          {freeCells}
-          <this.props.components.Cell
-            colSpan={colSpan}
-            padding="none"
-            columnDef={column}
-            value={value}
-            icons={this.props.icons}
-          >
-            <IconButton
-              style={{
-                transition: "all ease 200ms",
-                ...this.rotateIconStyle(this.props.groupData.isExpanded),
-              }}
-              onClick={(event) => {
-                this.props.onGroupExpandChanged(this.props.path);
-              }}
-            >
-              <this.props.icons.DetailPanel />
-            </IconButton>
-            <b>{groupText}</b>
-          </this.props.components.Cell>
-        </TableRow>
-        {detail}
-      </>
-    );
-  }
-}
-
-MTableGroupRow.defaultProps = {
-  columns: [],
-  groups: [],
-  options: {},
-  level: 0,
-};
-
-MTableGroupRow.propTypes = {
-  actions: PropTypes.array,
-  columns: PropTypes.arrayOf(PropTypes.object),
-  components: PropTypes.object,
+export const propTypes = {
+  actions: PropTypes.arrayOf(
+    PropTypes.oneOfType([
+      PropTypes.func,
+      PropTypes.shape({
+        icon: PropTypes.oneOfType([
+          PropTypes.element,
+          PropTypes.func,
+          PropTypes.string,
+          RefComponent,
+        ]).isRequired,
+        isFreeAction: PropTypes.bool,
+        position: PropTypes.oneOf([
+          "auto",
+          "toolbar",
+          "toolbarOnSelect",
+          "row",
+        ]),
+        tooltip: PropTypes.string,
+        onClick: PropTypes.func.isRequired,
+        iconProps: PropTypes.object,
+        disabled: PropTypes.bool,
+        hidden: PropTypes.bool,
+      }),
+    ])
+  ),
+  columns: PropTypes.arrayOf(
+    PropTypes.shape({
+      cellStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
+      currencySetting: PropTypes.shape({
+        locale: PropTypes.string,
+        currencyCode: PropTypes.string,
+        minimumFractionDigits: PropTypes.number,
+        maximumFractionDigits: PropTypes.number,
+      }),
+      customFilterAndSearch: PropTypes.func,
+      customSort: PropTypes.func,
+      defaultFilter: PropTypes.any,
+      defaultSort: PropTypes.oneOf(["asc", "desc"]),
+      editComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+      emptyValue: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.node,
+        PropTypes.func,
+      ]),
+      export: PropTypes.bool,
+      field: PropTypes.string,
+      filtering: PropTypes.bool,
+      filterCellStyle: PropTypes.object,
+      filterPlaceholder: PropTypes.string,
+      filterComponent: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
+      grouping: PropTypes.bool,
+      headerStyle: PropTypes.object,
+      hidden: PropTypes.bool,
+      hideFilterIcon: PropTypes.bool,
+      initialEditValue: PropTypes.any,
+      lookup: PropTypes.object,
+      editable: PropTypes.oneOfType([
+        PropTypes.func,
+        PropTypes.oneOf(["always", "onUpdate", "onAdd", "never"]),
+      ]),
+      removable: PropTypes.bool,
+      render: PropTypes.func,
+      searchable: PropTypes.bool,
+      sorting: PropTypes.bool,
+      title: PropTypes.oneOfType([PropTypes.element, PropTypes.string]),
+      type: PropTypes.oneOf([
+        "string",
+        "boolean",
+        "numeric",
+        "date",
+        "datetime",
+        "time",
+        "currency",
+      ]),
+    })
+  ).isRequired,
+  components: PropTypes.shape({
+    Action: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    Actions: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    Body: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    Cell: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    Container: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    EditField: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    EditRow: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    FilterRow: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    Groupbar: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    GroupRow: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    Header: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    OverlayLoading: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    OverlayError: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    Pagination: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    Row: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+    Toolbar: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      StyledComponent,
+    ]),
+  }),
+  data: PropTypes.oneOfType([
+    PropTypes.arrayOf(PropTypes.object),
+    PropTypes.func,
+  ]).isRequired,
+  editable: PropTypes.shape({
+    isEditable: PropTypes.func,
+    isDeletable: PropTypes.func,
+    onRowAdd: PropTypes.func,
+    onRowUpdate: PropTypes.func,
+    onRowDelete: PropTypes.func,
+    onRowAddCancelled: PropTypes.func,
+    onRowUpdateCancelled: PropTypes.func,
+    isEditHidden: PropTypes.func,
+    isDeleteHidden: PropTypes.func,
+  }),
   detailPanel: PropTypes.oneOfType([
     PropTypes.func,
-    PropTypes.arrayOf(PropTypes.object),
+    PropTypes.arrayOf(
+      PropTypes.oneOfType([
+        PropTypes.func,
+        PropTypes.shape({
+          disabled: PropTypes.bool,
+          icon: PropTypes.oneOfType([
+            PropTypes.element,
+            PropTypes.func,
+            PropTypes.string,
+            RefComponent,
+          ]),
+          openIcon: PropTypes.oneOfType([
+            PropTypes.element,
+            PropTypes.func,
+            PropTypes.string,
+            RefComponent,
+          ]),
+          tooltip: PropTypes.string,
+          render: PropTypes.func.isRequired,
+        }),
+      ])
+    ),
   ]),
-  getFieldValue: PropTypes.func,
-  groupData: PropTypes.object,
-  groups: PropTypes.arrayOf(PropTypes.object),
-  hasAnyEditingRow: PropTypes.bool,
-  icons: PropTypes.object,
-  isTreeData: PropTypes.bool.isRequired,
-  level: PropTypes.number,
-  localization: PropTypes.object,
-  onGroupExpandChanged: PropTypes.func,
-  onRowSelected: PropTypes.func,
+  icons: PropTypes.shape({
+    Add: PropTypes.oneOfType([PropTypes.element, PropTypes.func, RefComponent]),
+    Check: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    Clear: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    Delete: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    DetailPanel: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    Edit: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    Export: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    Filter: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    FirstPage: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    LastPage: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    NextPage: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    PreviousPage: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    Refresh: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    ResetSearch: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    Search: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    SortArrow: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    ThirdStateCheck: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+    ViewColumn: PropTypes.oneOfType([
+      PropTypes.element,
+      PropTypes.func,
+      RefComponent,
+    ]),
+  }),
+  isLoading: PropTypes.bool,
+  title: PropTypes.oneOfType([PropTypes.element, PropTypes.string]),
+  options: PropTypes.shape({
+    actionsCellStyle: PropTypes.object,
+    editCellStyle: PropTypes.object,
+    detailPanelColumnStyle: PropTypes.object,
+    actionsColumnIndex: PropTypes.number,
+    addRowPosition: PropTypes.oneOf(["first", "last"]),
+    columnsButton: PropTypes.bool,
+    defaultExpanded: PropTypes.oneOfType([PropTypes.bool, PropTypes.func]),
+    debounceInterval: PropTypes.number,
+    detailPanelType: PropTypes.oneOf(["single", "multiple"]),
+    doubleHorizontalScroll: PropTypes.bool,
+    emptyRowsWhenPaging: PropTypes.bool,
+    exportAllData: PropTypes.bool,
+    exportButton: PropTypes.oneOfType([
+      PropTypes.bool,
+      PropTypes.shape({ csv: PropTypes.bool, pdf: PropTypes.bool }),
+    ]),
+    exportDelimiter: PropTypes.string,
+    exportFileName: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    exportCsv: PropTypes.func,
+    filtering: PropTypes.bool,
+    filterCellStyle: PropTypes.object,
+    filterRowStyle: PropTypes.object,
+    header: PropTypes.bool,
+    headerSelectionProps: PropTypes.object,
+    headerStyle: PropTypes.object,
+    hideFilterIcons: PropTypes.bool,
+    initialPage: PropTypes.number,
+    maxBodyHeight: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    minBodyHeight: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    loadingType: PropTypes.oneOf(["overlay", "linear"]),
+    overflowY: PropTypes.oneOf([
+      "visible",
+      "hidden",
+      "scroll",
+      "auto",
+      "initial",
+      "inherit",
+    ]),
+    padding: PropTypes.oneOf(["default", "dense"]),
+    paging: PropTypes.bool,
+    pageSize: PropTypes.number,
+    pageSizeOptions: PropTypes.arrayOf(PropTypes.number),
+    paginationType: PropTypes.oneOf(["normal", "stepped"]),
+    paginationPosition: PropTypes.oneOf(["bottom", "top", "both"]),
+    rowStyle: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
+    search: PropTypes.bool,
+    searchText: PropTypes.string,
+    toolbarButtonAlignment: PropTypes.oneOf(["left", "right"]),
+    searchFieldAlignment: PropTypes.oneOf(["left", "right"]),
+    searchFieldStyle: PropTypes.object,
+    searchAutoFocus: PropTypes.bool,
+    searchFieldVariant: PropTypes.oneOf(["standard", "filled", "outlined"]),
+    selection: PropTypes.bool,
+    selectionProps: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
+    showEmptyDataSourceMessage: PropTypes.bool,
+    showFirstLastPageButtons: PropTypes.bool,
+    showSelectAllCheckbox: PropTypes.bool,
+    showTitle: PropTypes.bool,
+    showTextRowsSelected: PropTypes.bool,
+    sorting: PropTypes.bool,
+    toolbar: PropTypes.bool,
+    thirdSortClick: PropTypes.bool,
+  }),
+  localization: PropTypes.shape({
+    grouping: PropTypes.shape({
+      groupedBy: PropTypes.string,
+      placeholder: PropTypes.string,
+    }),
+    pagination: PropTypes.object,
+    toolbar: PropTypes.object,
+    header: PropTypes.object,
+    body: PropTypes.object,
+  }),
+  initialFormData: PropTypes.object,
+  onSearchChange: PropTypes.func,
+  onFilterChange: PropTypes.func,
+  onColumnDragged: PropTypes.func,
+  onGroupRemoved: PropTypes.func,
+  onSelectionChange: PropTypes.func,
+  onChangeRowsPerPage: PropTypes.func,
+  onChangePage: PropTypes.func,
+  onChangeColumnHidden: PropTypes.func,
+  onOrderChange: PropTypes.func,
   onRowClick: PropTypes.func,
-  onToggleDetailPanel: PropTypes.func.isRequired,
-  onTreeExpandChanged: PropTypes.func.isRequired,
-  onEditingCanceled: PropTypes.func,
-  onEditingApproved: PropTypes.func,
-  options: PropTypes.object,
-  path: PropTypes.arrayOf(PropTypes.number),
+  onTreeExpandChange: PropTypes.func,
+  onQueryChange: PropTypes.func,
+  tableRef: PropTypes.any,
+  style: PropTypes.object,
+  page: PropTypes.number,
+  totalCount: PropTypes.number,
 };
